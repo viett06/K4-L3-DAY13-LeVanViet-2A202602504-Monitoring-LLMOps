@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import os
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import Any, Iterator
+
+from structlog.contextvars import bind_contextvars
 
 from . import metrics
 from .mock_llm import FakeLLM
@@ -21,6 +25,18 @@ class AgentResult:
     tokens_out: int
     cost_usd: float
     quality_score: float
+    retrieval_ms: int
+    generation_ms: int
+
+
+@contextmanager
+def _child_observation(client: Any, **kwargs: Any) -> Iterator[Any]:
+    starter = getattr(client, "start_as_current_observation", None)
+    if not callable(starter):
+        yield None
+        return
+    with starter(**kwargs) as observation:
+        yield observation
 
 
 class LabAgent:
@@ -51,7 +67,34 @@ class LabAgent:
             },
         ):
             started = time.perf_counter()
-            docs = retrieve(message)
+            retrieval_started = time.perf_counter()
+            with _child_observation(
+                langfuse_client,
+                name="retrieval",
+                as_type="retriever",
+                input={"query_preview": summarize_text(message)},
+            ) as retrieval_obs:
+                try:
+                    docs = retrieve(message)
+                except Exception as exc:
+                    retrieval_ms = int((time.perf_counter() - retrieval_started) * 1000)
+                    if retrieval_obs is not None:
+                        retrieval_obs.update(
+                            level="ERROR",
+                            status_message=type(exc).__name__,
+                            metadata={"retrieval_ms": retrieval_ms, "tool_success": False},
+                        )
+                    bind_contextvars(retrieval_ms=retrieval_ms)
+                    raise
+                retrieval_ms = int((time.perf_counter() - retrieval_started) * 1000)
+                if retrieval_obs is not None:
+                    retrieval_obs.update(
+                        output={
+                            "doc_count": len(docs),
+                            "docs_preview": [summarize_text(doc) for doc in docs],
+                        },
+                        metadata={"retrieval_ms": retrieval_ms, "tool_success": True},
+                    )
             prompt = resolve_prompt(
                 langfuse_client,
                 feature=feature,
@@ -71,14 +114,44 @@ class LabAgent:
                 },
                 version=prompt.version,
             )
-            # TODO (CP2): instrument retrieve() and FakeLLM.generate() as child
-            # observations. The nested generation must receive prompt, usage and cost.
+            generation_started = time.perf_counter()
             with propagate_attributes(prompt=prompt.managed_prompt):
-                response = self.llm.generate(prompt.text)
+                generation_kwargs: dict[str, Any] = {
+                    "name": "generation",
+                    "as_type": "generation",
+                    "model": self.model,
+                    "input": {"prompt_preview": summarize_text(prompt.text)},
+                    "metadata": {
+                        "prompt_name": prompt.name,
+                        "prompt_label": prompt.label,
+                        "prompt_version": prompt.version,
+                        "prompt_source": prompt.source,
+                    },
+                }
+                if prompt.managed_prompt is not None:
+                    generation_kwargs["prompt"] = prompt.managed_prompt
+                with _child_observation(langfuse_client, **generation_kwargs) as generation_obs:
+                    response = self.llm.generate(prompt.text)
+                    generation_ms = int((time.perf_counter() - generation_started) * 1000)
+                    cost_usd = self._estimate_cost(
+                        response.usage.input_tokens,
+                        response.usage.output_tokens,
+                    )
+                    if generation_obs is not None:
+                        generation_obs.update(
+                            output={"answer_preview": summarize_text(response.text)},
+                            model=response.model,
+                            usage_details={
+                                "input": response.usage.input_tokens,
+                                "output": response.usage.output_tokens,
+                                "total": response.usage.input_tokens + response.usage.output_tokens,
+                            },
+                            cost_details={"total": cost_usd},
+                        )
             quality_score = self._heuristic_quality(message, response.text, docs)
             latency_ms = int((time.perf_counter() - started) * 1000)
-            cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
 
+        bind_contextvars(retrieval_ms=retrieval_ms, generation_ms=generation_ms)
         metrics.record_request(
             latency_ms=latency_ms,
             ttft_ms=response.ttft_ms,
@@ -96,6 +169,8 @@ class LabAgent:
             tokens_out=response.usage.output_tokens,
             cost_usd=cost_usd,
             quality_score=quality_score,
+            retrieval_ms=retrieval_ms,
+            generation_ms=generation_ms,
         )
 
     def _estimate_cost(self, tokens_in: int, tokens_out: int) -> float:

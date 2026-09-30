@@ -46,7 +46,7 @@ def resolve_prompt(
                 type="text",
                 fallback=DEFAULT_PROMPT_TEMPLATE,
                 cache_ttl_seconds=60,
-                fetch_timeout_seconds=2,
+                fetch_timeout_seconds=int(os.getenv("LANGFUSE_PROMPT_FETCH_TIMEOUT", "2")),
                 max_retries=0,
             )
             if getattr(managed_prompt, "is_fallback", False):

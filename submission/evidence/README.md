@@ -23,7 +23,7 @@ Tên file gợi ý:
 
 Có thể dùng `.txt` cho output của tests/validators. Có thể tách dashboard thành nhiều ảnh nếu một ảnh không đọc rõ.
 
-Ảnh `04`, `05`, `13` lấy từ terminal hoặc `data/logs.jsonl`. Ảnh `06`–`10`, `14` lấy từ project Langfuse cá nhân `day13-k4-l3b-<MSSV>` và nên nhìn thấy tên project. Không mở/chụp trang API Keys.
+Ảnh `04`, `05`, `13` lấy từ log JSON của phiên chạy local. Ảnh `06`–`10` dựng từ Observations API và Prompts API của project `cmunjid0304ucad0cv0yg1wsm` trên `https://us.cloud.langfuse.com` (UI đang tên `My Project`). Chrome headless không có phiên đăng nhập nên đây không phải screenshot UI. Ảnh `14-incident-trace.png` là span timing đo trong process cho `rag_slow`, khác waterfall Langfuse ở `07`. Không mở/chụp trang API Keys.
 
 Từ `submission/REPORT.md`, dẫn ảnh bằng đường dẫn tương đối:
 

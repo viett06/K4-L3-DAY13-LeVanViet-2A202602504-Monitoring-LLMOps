@@ -8,7 +8,13 @@ PII_PATTERNS: dict[str, str] = {
     "phone_vn": r"(?<!\d)(?:\+84|0)(?:[ .-]?\d){9}(?!\d)",
     "cccd": r"\b\d{12}\b",
     "credit_card": r"\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b",
-    # TODO: Add more patterns (e.g., Passport, Vietnamese address keywords)
+    # Hộ chiếu Việt Nam: một chữ in hoa + 7 chữ số, ví dụ B1234567.
+    "passport": r"\b[A-Z]\d{7}\b",
+    "vn_address": (
+        r"(?i)(?:\b(?:số\s+nhà|so\s+nha)\s+\d+\b|"
+        r"\b(?:đường|duong|phường|phuong|quận|quan|huyện|huyen|"
+        r"tỉnh|tinh|thành phố|thanh pho|phố|pho)\s+\S+(?:\s+\S+){0,5})"
+    ),
 }
 
 
