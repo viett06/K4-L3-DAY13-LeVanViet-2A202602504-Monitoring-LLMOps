@@ -6,7 +6,7 @@
 - **MSSV:** 2A202602504
 - **Lớp:** K4-L3B
 - **Repository URL:** https://github.com/viett06/K4-L3-DAY13-LeVanViet-2A202602504-Monitoring-LLMOps
-- **Commit SHA cuối:** chưa commit. Phần làm việc nằm trên starter `61a34f8`. SHA nộp bài là commit sau khi push working tree này.
+- **Commit SHA cuối:** `0dada7d64a2dcd7f594d4ba1f6b4b4c0b9043371` (`0dada7d`), trên `main`, ngay sau starter `61a34f8`.
 - **Challenge ID:** không có. `config/challenge.json` chưa được Lab Coach release, nên điều tra bằng practice scenario `rag_slow`, không tự tạo file challenge.
 - **Tên project Langfuse cá nhân:** key hợp lệ trên `https://us.cloud.langfuse.com`. Project id `cmunjid0304ucad0cv0yg1wsm`, tổ chức `Việt's Organization`. Tên trên UI hiện là `My Project`. API key của project bị từ chối khi đổi tên (`AccessDenied`). Cần đổi tay trên UI thành `day13-k4-l3b-2A202602504`. Trang trace: `https://us.cloud.langfuse.com/project/cmunjid0304ucad0cv0yg1wsm/traces`
 
@@ -131,7 +131,7 @@ Workload: 10 request baseline tuần tự, sau đó bật `rag_slow` và gửi 1
   - Project Langfuse vẫn tên `My Project`. Cần đổi tên trên UI thành `day13-k4-l3b-2A202602504`. Trace và prompt đã nằm trong project id `cmunjid0304ucad0cv0yg1wsm`.
   - Ảnh `06`–`10` dựng từ API, vì phiên headless không có session đăng nhập UI.
   - Chưa có challenge ID chính thức.
-  - Chưa commit/push, nên chưa có SHA cuối để nộp LMS.
+  - Commit local `0dada7d` chưa thấy trên remote. SHA nộp LMS phải là commit đã push.
   - Dashboard là trang render từ log, không phải Grafana chạy refresh 30 giây liên tục. Contract và số liệu lấy từ `data/logs.jsonl` của cửa sổ incident 03:05 UTC. Workload Langfuse lúc 03:39 UTC ghi thêm log local; ảnh dashboard không được render lại.
 
 ## 9. Checklist trước khi nộp
@@ -142,4 +142,4 @@ Workload: 10 request baseline tuần tự, sau đó bật `rag_slow` và gửi 1
 - [x] Trace/prompt evidence thuộc project Langfuse của key đã điền, id `cmunjid0304ucad0cv0yg1wsm`. Tên UI vẫn là `My Project` cho đến khi đổi tay.
 - [x] Repository chạy lại được theo README. API trả `ok: true` khi không có key.
 - [x] Không commit `.env`, API key, hay `config/challenge.json`.
-- [ ] URL repo và commit SHA cuối đã được nộp trên LMS/Codelabs. Chưa commit.
+- [ ] URL repo và commit SHA cuối đã được nộp trên LMS/Codelabs. Commit local là `0dada7d`; chưa push và chưa dán lên LMS.
